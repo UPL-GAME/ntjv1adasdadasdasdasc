@@ -220,10 +220,10 @@
       transition: transform 0.3s ease;
       display: flex;
       flex-direction: column;
-      gap: 30px; /* Ikki bet orasidagi masofa */
+      gap: 30px;
     }
 
-    /* A4 Sertifikat Stili (1-bet va 2-bet uchun umumiy) */
+    /* A4 Sertifikat Stili */
     .certificate-container {
       position: relative;
       width: 794px;
@@ -237,7 +237,7 @@
       overflow: hidden;
       margin: 0 auto;
       font-family: 'Times New Roman', Times, serif;
-      page-break-after: always; /* PDFda keyingi sahifaga o'tkazish */
+      page-break-after: always;
     }
 
     .certificate-container::before {
@@ -383,7 +383,6 @@
     .results-table td { padding: 4px 0; }
     .results-table td.val { text-align: right; font-weight: bold; width: 80px; }
 
-    /* 2-bet uchun maxsus diagramma rasmlari konteyneri */
     .cert-charts-box-page2 {
       display: flex;
       flex-direction: column;
@@ -469,6 +468,22 @@
     .btn-search:hover {
       background: #1b4727;
     }
+    .btn-telegram-pick {
+      padding: 12px 16px;
+      background: #0088cc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-telegram-pick:hover {
+      background: #006699;
+    }
     .found-user-card {
       margin-top: 15px;
       padding: 15px;
@@ -508,6 +523,18 @@
     }
     .user-info-bar b {
       color: #235c32;
+    }
+    .selected-user-bar {
+      background: #e3f2fd;
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 14px;
+      border-left: 4px solid #0088cc;
+      display: none;
+    }
+    .selected-user-bar b {
+      color: #0088cc;
     }
   </style>
 </head>
@@ -599,11 +626,18 @@
   <div class="search-section">
     <h3>🔎 Boshqa foydalanuvchi natijasini ko'rish</h3>
     <p style="font-size: 13px; color: #666; margin: 5px 0 10px 0;">
-      Telegram ID raqamini kiriting (masalan: 123456789)
+      Telegram ID raqamini kiriting yoki Telegram'dan foydalanuvchi tanlang
     </p>
     <div class="search-row">
       <input type="text" id="searchUserId" placeholder="Telegram ID...">
+      <button class="btn-telegram-pick" onclick="pickUserFromTelegram()">
+        👥 Tanlash
+      </button>
       <button class="btn-search" onclick="searchUserResults()">Qidirish</button>
+    </div>
+
+    <div id="selectedUserBar" class="selected-user-bar">
+      ✅ Tanlangan: <b id="selectedUserName">-</b> (ID: <b id="selectedUserId">-</b>)
     </div>
 
     <div id="accessDenied" class="access-denied">
@@ -822,15 +856,12 @@
   function loadUserCodeFromStorage() {
     const codeInput = document.getElementById('userCode');
     
-    // Barcha localStorage kalitlarini ko'rib chiqish
     let foundCode = null;
     
-    // 1. To'g'ridan-to'g'ri "user_code" kaliti
     if (localStorage.getItem('user_code')) {
       foundCode = localStorage.getItem('user_code');
     }
     
-    // 2. mock_lock_* kalitlari (natija kodi)
     if (!foundCode) {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -846,7 +877,6 @@
       }
     }
 
-    // 3. "last_result" kaliti
     if (!foundCode && localStorage.getItem('last_result')) {
       try {
         const data = JSON.parse(localStorage.getItem('last_result'));
@@ -865,19 +895,76 @@
   }
 
   // ═══════════════════════════════════════════════
-  //  RUXSAT TEKSHIRUVI (boshqa natijalarni ko'rish)
+  //  RUXSAT TEKSHIRUVI
   // ═══════════════════════════════════════════════
-  const ALLOWED_VIEWER_IDS = [
-    // Bu yerga ruxsat berilgan foydalanuvchilar Telegram ID larini kiriting
-    // Masalan: "123456789", "987654321"
-    // Hozircha bo'sh — hamma ko'ra oladi
-  ];
+  const ALLOWED_VIEWER_IDS = [];
 
   function canViewOthers() {
-    // Agar ALLOWED_VIEWER_IDS bo'sh bo'lsa — hamma ko'ra oladi
     if (ALLOWED_VIEWER_IDS.length === 0) return true;
-    // Aks holda faqat ro'yxatdagilar
     return CURRENT_USER_ID && ALLOWED_VIEWER_IDS.includes(CURRENT_USER_ID);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  TELEGRAM'DAN FOYDALANUVCHI TANLASH
+  //  switchInlineQuery orqali (bot inline mode kerak)
+  // ═══════════════════════════════════════════════
+  function pickUserFromTelegram() {
+    if (!window.Telegram || !window.Telegram.WebApp) {
+      alert('Telegram Web App mavjud emas!');
+      return;
+    }
+
+    try {
+      // switchInlineQuery — Telegram ichida inline rejimda odam tanlash
+      // Bot inline mode ni qo'llab-quvvatlashi kerak
+      // query — bo'sh string, chat_types — faqat shaxsiy chatlar
+      window.Telegram.WebApp.switchInlineQuery("user_id:", ["users"]);
+
+      // Foydalanuvchiga ko'rsatma
+      showTelegramHint();
+
+    } catch (e) {
+      console.error('switchInlineQuery xato:', e);
+      // Fallback: openTelegramLink orqali bot chatiga o'tish
+      try {
+        const botUsername = (window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) 
+          ? 'animeuzbektilida_afna_robot' 
+          : 'animeuzbektilida_afna_robot';
+        window.Telegram.WebApp.openTelegramLink(`https://t.me/${botUsername}?start=pick_user`);
+      } catch (e2) {
+        alert('Telegram orqali odam tanlash imkonsiz. Iltimos, ID ni qo\'lda kiriting.');
+      }
+    }
+  }
+
+  function showTelegramHint() {
+    // Foydalanuvchiga ko'rsatma berish
+    const hint = document.createElement('div');
+    hint.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0088cc;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      font-size: 14px;
+      z-index: 9999;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      max-width: 90%;
+      text-align: center;
+    `;
+    hint.innerHTML = `
+      📱 Telegram'dan foydalanuvchi tanlang...<br>
+      <small style="opacity:0.9">Inline rejimda odam tanlang</small>
+    `;
+    document.body.appendChild(hint);
+
+    // 8 sekunddan keyin o'chirish
+    setTimeout(() => {
+      if (hint.parentNode) hint.parentNode.removeChild(hint);
+    }, 8000);
   }
 
   // ═══════════════════════════════════════════════
@@ -896,15 +983,12 @@
       return;
     }
 
-    // Ruxsat tekshiruvi
     if (!canViewOthers()) {
       accessDenied.style.display = 'block';
       return;
     }
 
     try {
-      // Firebase dan foydalanuvchi natijasini olish
-      // results/ papkasida {firebase_key} = { user_id, test_id, answers, code, time }
       const res = await fetch('https://test-82a8a-default-rtdb.firebaseio.com/results.json');
       if (!res.ok) throw new Error('Firebase xatosi: ' + res.status);
       
@@ -914,7 +998,6 @@
         return;
       }
 
-      // Foydalanuvchini qidirish
       let foundData = null;
       let foundKey = null;
 
@@ -932,12 +1015,10 @@
         return;
       }
 
-      // Natijani hisoblash (Rasch modeli)
       const answersArr = foundData.answers || [];
       const numQuestions = answersArr.length;
       const totalCorrect = answersArr.filter(a => a === '1').reduce((s, a) => s + 1, 0);
 
-      // Statistika yig'ish
       const resultsMap = {};
       for (const key in allResults) {
         if (allResults[key] && allResults[key].answers) {
@@ -946,7 +1027,6 @@
       }
       const totalUsers = Object.keys(resultsMap).length;
 
-      // Rasch modeli
       let questionsData = {};
       for (let qIdx = 0; qIdx < numQuestions; qIdx++) {
         let correctCount = 0;
@@ -964,7 +1044,6 @@
       const finalResult = raschModel(questionsData, userAnswersMap);
       const userLevel = getGradeLevel(finalResult.standardScore);
 
-      // Ko'rsatish
       document.getElementById('foundUserName').textContent = 'Foydalanuvchi #' + searchId;
       document.getElementById('foundUserId').textContent = searchId;
       document.getElementById('foundCorrect').textContent = finalResult.totalCorrect + ' / ' + numQuestions;
