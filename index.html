@@ -1,1342 +1,666 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Rasch Model & Sertifikat Generator</title>
-  <!-- Telegram Web App API -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- html2pdf.js for generating PDF directly in browser -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <!-- Chart.js for Diagrams -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    /* Umumiy UI Stili */
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f7f6;
-      margin: 0;
-      color: #333;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mock Test Professional</title>
+    
+    <!-- Kerakli kutubxonalar -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)'], ['$', '$']],
+                displayMath: [['\\[', '\\]'], ['$$', '$$']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
-    .main-container {
-      max-width: 800px;
-      margin: 20px auto;
-      background: #ffffff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    }
-
-    h2 {
-      text-align: center;
-      color: #1a1a1a;
-      margin-top: 0;
-      margin-bottom: 25px;
-    }
-
-    .form-group {
-      margin-bottom: 18px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-      color: #444;
-      font-size: 14px;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 15px;
-      transition: border-color 0.2s;
-    }
-
-    input[type="text"]:focus {
-      border-color: #c8a45b;
-      outline: none;
-    }
-
-    .btn-submit {
-      width: 100%;
-      padding: 14px;
-      background-color: #235c32;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      margin-top: 10px;
-    }
-
-    .btn-submit:hover {
-      background-color: #1b4727;
-    }
-
-    .btn-pdf {
-      width: 100%;
-      padding: 14px;
-      background-color: #c8a45b;
-      color: #1a1a1a;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      margin-top: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .btn-pdf:hover {
-      background-color: #b38f3e;
-      color: #fff;
-    }
-
-    .status-msg {
-      text-align: center;
-      margin-top: 15px;
-      font-size: 15px;
-      font-weight: 600;
-      display: none;
-    }
-
-    .status-error {
-      color: #d9534f;
-    }
-
-    .status-loading {
-      color: #0275d8;
-    }
-
-    .result-card {
-      margin-top: 25px;
-      padding: 20px;
-      border-radius: 8px;
-      background-color: #fcfcfc;
-      border: 1px solid #e0e0e0;
-      display: none;
-    }
-
-    .result-card h3 {
-      margin-top: 0;
-      color: #235c32;
-      border-bottom: 2px solid #c8a45b;
-      padding-bottom: 8px;
-    }
-
-    .result-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px dashed #eee;
-    }
-
-    .result-row:last-child {
-      border-bottom: none;
-    }
-
-    .result-val {
-      font-weight: bold;
-      color: #1a1a1a;
-    }
-
-    .diagram-section {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 2px solid #c8a45b;
-    }
-
-    .diagram-section h3 {
-      text-align: center;
-      color: #235c32;
-      margin-bottom: 20px;
-    }
-
-    .chart-container {
-      position: relative;
-      margin-bottom: 30px;
-      background: #ffffff;
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid #e0e0e0;
-      overflow-x: auto;
-    }
-
-    .chart-inner {
-      min-width: 700px;
-    }
-
-    /* ALOHIDA OYNA (PREVIEW) SOZLAMALARI */
-    #certPreviewPage {
-      display: none; 
-      padding: 20px; 
-      background: #1a1a1a; 
-      min-height: 100vh; 
-      flex-direction: column; 
-      align-items: center;
-      width: 100%;
-    }
-
-    .preview-actions {
-      display: flex; 
-      gap: 15px; 
-      margin-bottom: 25px; 
-      width: 100%; 
-      max-width: 800px; 
-      justify-content: center;
-      position: relative;
-      z-index: 10;
-    }
-
-    .btn-back, .btn-download {
-      padding: 14px 24px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 15px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: opacity 0.2s;
-    }
-
-    .btn-back { background: #555; color: white; }
-    .btn-download { background: #c8a45b; color: #111; }
-
-    #certScaleWrapper {
-      transform-origin: top center;
-      transition: transform 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      gap: 30px;
-    }
-
-    /* A4 Sertifikat Stili */
-    .certificate-container {
-      position: relative;
-      width: 794px;
-      height: 1123px;
-      background: #fbf8ee;
-      border: 12px solid #c8a45b;
-      padding: 40px 45px;
-      box-sizing: border-box;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      color: #1a1a1a;
-      overflow: hidden;
-      margin: 0 auto;
-      font-family: 'Times New Roman', Times, serif;
-      page-break-after: always;
-    }
-
-    .certificate-container::before {
-      content: '';
-      position: absolute;
-      top: 8px; left: 8px; right: 8px; bottom: 8px;
-      border: 1px solid #c8a45b;
-      pointer-events: none;
-    }
-
-    .bg-pattern {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      opacity: 0.03;
-      pointer-events: none;
-      background-image: repeating-linear-gradient(45deg, #4a3b1c 0, #4a3b1c 1px, transparent 0, transparent 40px),
-                        repeating-linear-gradient(-45deg, #4a3b1c 0, #4a3b1c 1px, transparent 0, transparent 40px);
-    }
-
-    .corner {
-      position: absolute;
-      width: 65px; height: 65px;
-      border: 2px solid #b38f3e;
-      pointer-events: none;
-    }
-    .tl { top: 16px; left: 16px; border-right: none; border-bottom: none; }
-    .tr { top: 16px; right: 16px; border-left: none; border-bottom: none; }
-    .bl { bottom: 16px; left: 16px; border-right: none; border-top: none; }
-    .br { bottom: 16px; right: 16px; border-left: none; border-top: none; }
-
-    .header {
-      text-align: center;
-      position: relative;
-      z-index: 1;
-      margin-top: 5px;
-    }
-
-    .emblem-placeholder {
-      width: 60px; height: 60px;
-      background: #235c32;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 24px;
-      font-weight: bold;
-      border: 2px solid #d4af37;
-      margin-bottom: 6px;
-    }
-
-    .header h3 {
-      font-size: 13px;
-      font-weight: bold;
-      text-transform: uppercase;
-      color: #111;
-      margin: 0;
-      line-height: 1.4;
-    }
-
-    .divider {
-      border: none;
-      border-top: 2px solid #111;
-      margin: 12px 0 15px 0;
-      position: relative;
-      z-index: 1;
-    }
-
-    .title {
-      text-align: center;
-      font-weight: bold;
-      font-size: 16px;
-      margin-bottom: 20px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .content-grid {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      position: relative;
-      z-index: 1;
-    }
-
-    .info-side { flex: 1; }
-
-    .photo-side {
-      width: 110px; height: 140px;
-      background-color: #e2e8f0;
-      border: 2px solid #b38f3e;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-size: 12px;
-      color: #666;
-      margin-left: 20px;
-    }
-
-    .field-group { margin-bottom: 8px; font-size: 13.5px; }
-    .field-label { display: inline-block; width: 200px; color: #222; }
-    .field-value {
-      display: inline-block;
-      font-weight: bold;
-      color: #111;
-      border-bottom: 1px dashed #4a3b1c;
-      min-width: 160px;
-      padding-bottom: 2px;
-    }
-
-    .info-table {
-      width: 100%;
-      margin-top: 15px;
-      font-size: 13.5px;
-      position: relative;
-      z-index: 1;
-      border-collapse: collapse;
-    }
-
-    .info-table td { padding: 4px 0; }
-    .info-table td.right { text-align: right; font-weight: bold; }
-
-    .section-title {
-      font-weight: bold;
-      margin-top: 15px;
-      margin-bottom: 8px;
-      font-size: 13.5px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .results-table {
-      width: 100%;
-      font-size: 13.5px;
-      position: relative;
-      z-index: 1;
-      border-collapse: collapse;
-    }
-
-    .results-table td { padding: 4px 0; }
-    .results-table td.val { text-align: right; font-weight: bold; width: 80px; }
-
-    .cert-charts-box-page2 {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      margin-top: 15px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .cert-chart-img-large {
-      width: 100%;
-      height: 290px;
-      object-fit: contain;
-      border: 1px solid #c8a45b;
-      border-radius: 6px;
-      background: #ffffff;
-      padding: 6px;
-    }
-
-    .footer {
-      margin-top: 25px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .bottom-section {
-      margin-top: 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    .signature-area { display: flex; align-items: center; gap: 15px; }
-    .qr-image-container {
-      width: 55px; height: 55px;
-      border: 2px solid #235c32;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      background: #fff;
-    }
-    .qr-image-container img { width: 100%; height: 100%; object-fit: cover; }
-
-    /* YANGI: Boshqa foydalanuvchi natijasini qidirish bo'limi */
-    .search-section {
-      margin-top: 25px;
-      padding: 20px;
-      background: #f8f9fa;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-    }
-    .search-section h3 {
-      margin-top: 0;
-      color: #235c32;
-      font-size: 16px;
-      border-bottom: 2px solid #c8a45b;
-      padding-bottom: 8px;
-    }
-    .search-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .search-row input {
-      flex: 1;
-    }
-    .btn-search {
-      padding: 12px 20px;
-      background: #235c32;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .btn-search:hover {
-      background: #1b4727;
-    }
-    .btn-telegram-pick {
-      padding: 12px 16px;
-      background: #0088cc;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-telegram-pick:hover {
-      background: #006699;
-    }
-    .found-user-card {
-      margin-top: 15px;
-      padding: 15px;
-      background: #ffffff;
-      border-left: 4px solid #c8a45b;
-      border-radius: 6px;
-      display: none;
-    }
-    .found-user-card h4 {
-      margin: 0 0 10px 0;
-      color: #235c32;
-    }
-    .found-user-card .info-line {
-      font-size: 14px;
-      padding: 4px 0;
-    }
-    .found-user-card .info-line b {
-      color: #333;
-    }
-    .access-denied {
-      margin-top: 15px;
-      padding: 12px;
-      background: #ffe6e6;
-      border-left: 4px solid #d9534f;
-      border-radius: 6px;
-      color: #a94442;
-      font-size: 14px;
-      display: none;
-    }
-    .user-info-bar {
-      background: #e8f5e9;
-      padding: 12px 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 14px;
-      border-left: 4px solid #235c32;
-    }
-    .user-info-bar b {
-      color: #235c32;
-    }
-    .selected-user-bar {
-      background: #e3f2fd;
-      padding: 12px 15px;
-      border-radius: 8px;
-      margin-top: 12px;
-      font-size: 14px;
-      border-left: 4px solid #0088cc;
-      display: none;
-    }
-    .selected-user-bar b {
-      color: #0088cc;
-    }
-  </style>
+    <style>
+        :root {
+            --primary: #248bcf;
+            --success: #28a745;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #333;
+            --border: #e0e0e0;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px 10px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        h3 { 
+            text-align: center; 
+            color: var(--primary); 
+            margin-bottom: 25px; 
+            font-size: 24px;
+        }
+        .q-row {
+            display: flex; 
+            align-items: center; 
+            padding: 12px 0; 
+            border-bottom: 1px solid var(--border); 
+            gap: 15px;
+        }
+        .q-num {
+            font-weight: bold; 
+            min-width: 30px; 
+            color: #666;
+        }
+        .options-container {
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 8px;
+        }
+        .opt-btn {
+            min-width: 40px; 
+            height: 40px; 
+            border: 2px solid var(--border); 
+            border-radius: 8px; 
+            background: white; 
+            cursor: pointer; 
+            font-weight: 600;
+        }
+        .opt-btn.active {
+            background: var(--primary); 
+            color: white; 
+            border-color: var(--primary); 
+            transform: scale(1.05);
+        }
+        math-field {
+            width: 100%; 
+            padding: 8px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border); 
+            background: #fafafa; 
+            font-size: 18px;
+        }
+        .submit-btn {
+            width: 100%; 
+            padding: 16px; 
+            background: var(--success); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 18px; 
+            font-weight: bold; 
+            margin-top: 30px; 
+            cursor: pointer;
+        }
+        .submit-btn:hover {
+            opacity: 0.9;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-size: 16px;
+        }
+        .q-text {
+            font-size: 15px;
+            color: #222;
+            margin-bottom: 8px;
+            line-height: 1.5;
+            width: 100%;
+        }
+        .group-title {
+            background: linear-gradient(135deg, #6a3093, #a044ff);
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            margin: 15px 0 10px;
+        }
+        .q-image {
+            max-width: 100%;
+            margin: 10px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            display: block;
+        }
+        .lock-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .lock-screen .icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        .lock-screen h2 {
+            color: #e74c3c;
+            margin-bottom: 15px;
+        }
+        .lock-screen p {
+            color: #666;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+    </style>
 </head>
 <body>
 
-<!-- ASOSIY BOSH SAHIFA -->
-<div class="main-container" id="mainPage">
-  <h2>Natijani Tekshirish va Sertifikat Olish</h2>
-  
-  <!-- Foydalanuvchi ma'lumotlari (avtomatik) -->
-  <div class="user-info-bar" id="userInfoBar" style="display:none;">
-    👤 <b id="currentUserName">-</b> | ID: <b id="currentUserId">-</b>
-  </div>
-
-  <div class="form-group">
-    <label for="userCode">Maxsus kodingiz (localStorage dan olinadi):</label>
-    <input type="text" id="userCode" placeholder="Kod avtomatik olinadi..." readonly>
-  </div>
-
-  <div class="form-group">
-    <label for="userFamiliya">Familiyangiz:</label>
-    <input type="text" id="userFamiliya" placeholder="Avtomatik to'ldiriladi">
-  </div>
-
-  <div class="form-group">
-    <label for="userIsm">Ismingiz:</label>
-    <input type="text" id="userIsm" placeholder="Avtomatik to'ldiriladi">
-  </div>
-
-  <div class="form-group">
-    <label for="userOtasi">Otasining ismi:</label>
-    <input type="text" id="userOtasi" placeholder="Masalan: Ikromovich">
-  </div>
-
-  <button class="btn-submit" onclick="checkResults()">Tekshirish</button>
-
-  <div id="statusMessage" class="status-msg"></div>
-
-  <div id="resultCard" class="result-card">
-    <h3>Sinov Natijasi</h3>
-    <div class="result-row">
-      <span>Testda qatnashganlar soni:</span>
-      <span class="result-val" id="resTotalUsers">-</span>
+<div class="container">
+    <h3>Mock Test Javoblarini belgilang</h3>
+    <div id="timer" style="text-align: center; color: #e74c3c; font-size: 20px; font-weight: bold; margin-bottom: 20px;"></div>
+    <div id="test-form">
+        <div class="loading">⏳ Savollar yuklanmoqda...</div>
     </div>
-    <div class="result-row">
-      <span>Ishlangan savollar (To'g'ri):</span>
-      <span class="result-val" id="resCorrect">-</span>
-    </div>
-    <div class="result-row">
-      <span>Umumiy savollar soni:</span>
-      <span class="result-val" id="resTotal">-</span>
-    </div>
-    <div class="result-row">
-      <span>Qobiliyat ko'rsatkichi (Theta):</span>
-      <span class="result-val" id="resTheta">-</span>
-    </div>
-    <div class="result-row">
-      <span>Umumiy to'plangan ball (0-100):</span>
-      <span class="result-val" id="resScore">-</span>
-    </div>
-    <div class="result-row">
-      <span>Bilim darajasi:</span>
-      <span class="result-val" id="resLevel">-</span>
-    </div>
-
-    <!-- Diagrammalar Bo'limi -->
-    <div class="diagram-section">
-      <h3>Savollar Diagrammasi</h3>
-      
-      <div class="chart-container">
-        <div class="chart-inner">
-          <canvas id="answersChart" height="120"></canvas>
-        </div>
-      </div>
-
-      <div class="chart-container">
-        <div class="chart-inner">
-          <canvas id="difficultyChart" height="120"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <button class="btn-pdf" onclick="showCertificatePreview()">
-      🔍 Sertifikatni Ko'rish (2 ta Bet)
-    </button>
-  </div>
-
-  <!-- YANGI: Boshqa foydalanuvchi natijasini qidirish -->
-  <div class="search-section">
-    <h3>🔎 Boshqa foydalanuvchi natijasini ko'rish</h3>
-    <p style="font-size: 13px; color: #666; margin: 5px 0 10px 0;">
-      Telegram ID raqamini kiriting yoki Telegram'dan foydalanuvchi tanlang
-    </p>
-    <div class="search-row">
-      <input type="text" id="searchUserId" placeholder="Telegram ID...">
-      <button class="btn-telegram-pick" onclick="pickUserFromTelegram()">
-        👥 Tanlash
-      </button>
-      <button class="btn-search" onclick="searchUserResults()">Qidirish</button>
-    </div>
-
-    <div id="selectedUserBar" class="selected-user-bar">
-      ✅ Tanlangan: <b id="selectedUserName">-</b> (ID: <b id="selectedUserId">-</b>)
-    </div>
-
-    <div id="accessDenied" class="access-denied">
-      ⛔ Sizda boshqa foydalanuvchilar natijasini ko'rishga ruxsat yo'q.
-    </div>
-
-    <div id="foundUserCard" class="found-user-card">
-      <h4 id="foundUserName">-</h4>
-      <div class="info-line"><b>Telegram ID:</b> <span id="foundUserId">-</span></div>
-      <div class="info-line"><b>To'g'ri javoblar:</b> <span id="foundCorrect">-</span></div>
-      <div class="info-line"><b>Umumiy ball:</b> <span id="foundScore">-</span></div>
-      <div class="info-line"><b>Bilim darajasi:</b> <span id="foundLevel">-</span></div>
-      <div class="info-line"><b>Theta:</b> <span id="foundTheta">-</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ALOHIDA OYNA: SERTIFIKAT PREVIEW (2 ta alohida bet) -->
-<div id="certPreviewPage">
-  <div class="preview-actions">
-    <button class="btn-back" onclick="hideCertificatePreview()">⬅ Orqaga</button>
-    <button class="btn-download" onclick="generatePDF()">📄 PDF Yuklab Olish </button>
-  </div>
-
-  <div id="certScaleWrapper">
-    
-    <!-- 1-BET: SERTIFIKAT ASLI -->
-    <div class="certificate-container" id="certContainer1">
-      <div class="bg-pattern"></div>
-      <div class="corner tl"></div>
-      <div class="corner tr"></div>
-      <div class="corner bl"></div>
-      <div class="corner br"></div>
-
-      <div class="header">
-        <div class="emblem-placeholder" style="overflow: hidden;"><img src="https://i.ibb.co/QFKDcTnj/image.png" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous"></div>
-        <h3>IDRISXON ACADEMY BILIM VA INNOVATSIYALAR MARKAZI<br>HUZURIDAGI BILIM VA MALAKALARNI BAHOLASH BOTI</h3>
-      </div>
-
-      <hr class="divider">
-
-      <div class="title">
-        Umumta'lim fanini bilish darajasi<br>to'g'risida sertifikat
-      </div>
-
-      <div class="content-grid">
-        <div class="info-side">
-          <div class="field-group">
-            <span class="field-label">Sertifikat raqami:</span>
-            <span class="field-value" id="certNumber">IA-2026-0001</span>
-          </div>
-          <div class="field-group">
-            <span class="field-label">Talabgorning shaxsiy raqami:</span>
-            <span class="field-value" id="certUserId">ID-88492</span>
-          </div>
-          <div class="field-group">
-            <span class="field-label">Familiyasi:</span>
-            <span class="field-value" id="certFamiliya">-</span>
-          </div>
-          <div class="field-group">
-            <span class="field-label">Ismi:</span>
-            <span class="field-value" id="certIsm">-</span>
-          </div>
-          <div class="field-group">
-            <span class="field-label">Otasining ismi:</span>
-            <span class="field-value" id="certOtasi">-</span>
-          </div>
-        </div>
-
-        <div class="photo-side" id="userPhotoSide">
-          Talabgor rasmi
-        </div>
-      </div>
-
-      <table class="info-table">
-        <tr>
-          <td><strong>Umumta'lim fani:</strong> Matematika (O'zbek)</td>
-          <td class="right">Umumiy to'plangan bali:</td>
-          <td class="right" style="width: 65px;" id="certScore">0</td>
-        </tr>
-        <tr>
-          <td><strong>Ishlangan savollar:</strong> <span id="certQuestionsWorked">0 / 0</span></td>
-          <td class="right">Umumiy ballga nisbatan foiz:</td>
-          <td class="right" id="certPercent">0 %</td>
-        </tr>
-        <tr>
-          <td><strong>Testda qatnashganlar soni:</strong> <span id="certTotalUsers">0</span> kishi</td>
-          <td class="right">Bilim darajasi:</td>
-          <td class="right" id="certLevel" style="font-weight: bold;">-</td>
-        </tr>
-      </table>
-
-      <div class="section-title">Bo'limlar bo'yicha test sinovi natijalari:</div>
-
-      <table class="results-table">
-        <tr>
-          <td>Matematika:</td>
-          <td class="val" id="certSectionScore">0</td>
-        </tr>
-      </table>
-
-      <div style="margin-top: 12px; background: #e2e8f0; border-radius: 6px; height: 10px; width: 100%; position: relative; z-index: 1; border: 1px solid #b38f3e; overflow: hidden;">
-        <div id="certScoreBar" style="background: linear-gradient(90deg, #c8a45b, #235c32); height: 100%; width: 0%; transition: width 0.5s ease;"></div>
-      </div>
-
-      <div class="footer">
-        <div><strong>Berilgan sanasi:</strong> <span id="certIssueDate">03.08.2026</span></div>
-        <div><strong>Amal qilish muddati:</strong> <span id="certExpiryDate">02.08.2029</span></div>
-      </div>
-
-      <div class="bottom-section">
-        <div><strong>Direktor</strong></div>
-        <div class="signature-area">
-          <div class="qr-image-container">
-            <img src="https://i.ibb.co/TxRtBwTQ/qr-1.png" alt="QR Code" crossorigin="anonymous">
-          </div>
-          <strong>SHARIPOV IDRIS</strong>
-        </div>
-      </div>
-    </div>
-
-    <!-- 2-BET: DIAGRAMMALAR VA TAHLIL ALOHIDA BET -->
-    <div class="certificate-container" id="certContainer2">
-      <div class="bg-pattern"></div>
-      <div class="corner tl"></div>
-      <div class="corner tr"></div>
-      <div class="corner bl"></div>
-      <div class="corner br"></div>
-
-      <div class="header">
-        <div class="emblem-placeholder" style="overflow: hidden;"><img src="https://i.ibb.co/QFKDcTnj/image.png" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous"></div>
-        <h3>IDRISXON ACADEMY BILIM VA INNOVATSIYALAR MARKAZI<br>TEST TAHLILI VA DIAGRAMMALAR HISOBOTI (2-BET)</h3>
-      </div>
-
-      <hr class="divider">
-
-      <div class="title">
-        Talabgorning savollar bo'yicha batafsil tahlili
-      </div>
-
-      <div class="section-title" style="margin-top: 5px;">1. Har bir savolga to'g'ri javob berganlar statistikasi:</div>
-      <div class="cert-charts-box-page2">
-        <img id="certChartImg1" class="cert-chart-img-large" alt="Javoblar statistikasi">
-        
-        <div class="section-title" style="margin-top: 5px;">2. Savollarning qiyinchilik darajasi (Rasch modeli - Beta):</div>
-        <img id="certChartImg2" class="cert-chart-img-large" alt="Qiyinchilik darajasi">
-      </div>
-
-      <div class="bottom-section" style="margin-top: 40px;">
-        <div style="font-size: 13px;">
-          <strong></strong><br>
-          
-        </div>
-        <div class="signature-area">
-          <div class="qr-image-container">
-            <img src="https://i.ibb.co/TxRtBwTQ/qr-1.png" alt="QR Code" crossorigin="anonymous">
-          </div>
-          <strong>MARKAZIY BAZA</strong>
-        </div>
-      </div>
-    </div>
-
-  </div>
+    <button class="submit-btn" onclick="sendToBot()">Javoblarni yuborish</button>
 </div>
 
 <script>
-  // ═══════════════════════════════════════════════
-  //  TELEGRAM WEB APP + FOYDALANUVCHI MA'LUMOTLARI
-  // ═══════════════════════════════════════════════
-  let CURRENT_USER_ID = null;
-  let CURRENT_USER = null;
+    // Telegram Web App ulash
+    let tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
 
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.Telegram && window.Telegram.WebApp) {
-      window.Telegram.WebApp.ready();
-      window.Telegram.WebApp.expand();
-      const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-      CURRENT_USER = tgUser;
-      
-      if (tgUser) {
-        CURRENT_USER_ID = tgUser.id ? String(tgUser.id) : null;
+    const form = document.getElementById('test-form');
 
-        // User info bar ko'rsatish
-        const infoBar = document.getElementById('userInfoBar');
-        const nameEl = document.getElementById('currentUserName');
-        const idEl = document.getElementById('currentUserId');
-        
-        const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
-        nameEl.textContent = fullName || 'Foydalanuvchi';
-        idEl.textContent = CURRENT_USER_ID || '-';
-        infoBar.style.display = 'block';
-
-        // Familiya va Ism avtomatik to'ldirish
-        if (tgUser.last_name) {
-          document.getElementById('userFamiliya').value = tgUser.last_name;
-        }
-        if (tgUser.first_name) {
-          document.getElementById('userIsm').value = tgUser.first_name;
-        }
-
-        // Rasm yuklash
-        if (tgUser.photo_url) {
-          const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(tgUser.photo_url);
-          document.getElementById('userPhotoSide').innerHTML = '<img src="' + proxyUrl + '" alt="Talabgor rasmi" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous">';
-        }
-      }
-
-      // localStorage dan kodni olish
-      loadUserCodeFromStorage();
-    }
-  });
-
-  // ═══════════════════════════════════════════════
-  //  LOCALSTORAGE DAN KODNI OLISH
-  // ═══════════════════════════════════════════════
-  function loadUserCodeFromStorage() {
-    const codeInput = document.getElementById('userCode');
-    
-    let foundCode = null;
-    
-    if (localStorage.getItem('user_code')) {
-      foundCode = localStorage.getItem('user_code');
-    }
-    
-    if (!foundCode) {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('mock_lock_')) {
-          try {
-            const data = JSON.parse(localStorage.getItem(key));
-            if (data && data.code) {
-              foundCode = data.code;
-              break;
+    // ═══════════════════════════════════════════════
+    //  FOYDALANUVCHI ID OLISH
+    // ═══════════════════════════════════════════════
+    function getUserId() {
+        try {
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
+                return String(tg.initDataUnsafe.user.id);
             }
-          } catch (e) {}
+        } catch (e) {}
+        return null;
+    }
+
+    // ═══════════════════════════════════════════════
+    //  TEST_ID OLISH (startapp YOKI ?test_id=)
+    // ═══════════════════════════════════════════════
+    function getTestIdFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        let testId = params.get('test_id');
+
+        if (!testId && tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+            testId = tg.initDataUnsafe.start_param;
         }
-      }
+
+        return testId || '';
     }
 
-    if (!foundCode && localStorage.getItem('last_result')) {
-      try {
-        const data = JSON.parse(localStorage.getItem('last_result'));
-        if (data && data.code) foundCode = data.code;
-      } catch (e) {}
-    }
-
-    if (foundCode) {
-      codeInput.value = foundCode;
-      codeInput.style.background = '#e8f5e9';
-    } else {
-      codeInput.value = '';
-      codeInput.placeholder = 'Kod topilmadi. Avval testni yeching.';
-      codeInput.style.background = '#fff3cd';
-    }
-  }
-
-  // ═══════════════════════════════════════════════
-  //  RUXSAT TEKSHIRUVI
-  // ═══════════════════════════════════════════════
-  const ALLOWED_VIEWER_IDS = [];
-
-  function canViewOthers() {
-    if (ALLOWED_VIEWER_IDS.length === 0) return true;
-    return CURRENT_USER_ID && ALLOWED_VIEWER_IDS.includes(CURRENT_USER_ID);
-  }
-
-  // ═══════════════════════════════════════════════
-  //  TELEGRAM'DAN FOYDALANUVCHI TANLASH
-  //  switchInlineQuery orqali (bot inline mode kerak)
-  // ═══════════════════════════════════════════════
-  function pickUserFromTelegram() {
-    if (!window.Telegram || !window.Telegram.WebApp) {
-      alert('Telegram Web App mavjud emas!');
-      return;
-    }
-
-    try {
-      // switchInlineQuery — Telegram ichida inline rejimda odam tanlash
-      // Bot inline mode ni qo'llab-quvvatlashi kerak
-      // query — bo'sh string, chat_types — faqat shaxsiy chatlar
-      window.Telegram.WebApp.switchInlineQuery("user_id:", ["users"]);
-
-      // Foydalanuvchiga ko'rsatma
-      showTelegramHint();
-
-    } catch (e) {
-      console.error('switchInlineQuery xato:', e);
-      // Fallback: openTelegramLink orqali bot chatiga o'tish
-      try {
-        const botUsername = (window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) 
-          ? 'animeuzbektilida_afna_robot' 
-          : 'animeuzbektilida_afna_robot';
-        window.Telegram.WebApp.openTelegramLink(`https://t.me/${botUsername}?start=pick_user`);
-      } catch (e2) {
-        alert('Telegram orqali odam tanlash imkonsiz. Iltimos, ID ni qo\'lda kiriting.');
-      }
-    }
-  }
-
-  function showTelegramHint() {
-    // Foydalanuvchiga ko'rsatma berish
-    const hint = document.createElement('div');
-    hint.style.cssText = `
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #0088cc;
-      color: white;
-      padding: 15px 25px;
-      border-radius: 10px;
-      font-size: 14px;
-      z-index: 9999;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-      max-width: 90%;
-      text-align: center;
-    `;
-    hint.innerHTML = `
-      📱 Telegram'dan foydalanuvchi tanlang...<br>
-      <small style="opacity:0.9">Inline rejimda odam tanlang</small>
-    `;
-    document.body.appendChild(hint);
-
-    // 8 sekunddan keyin o'chirish
-    setTimeout(() => {
-      if (hint.parentNode) hint.parentNode.removeChild(hint);
-    }, 8000);
-  }
-
-  // ═══════════════════════════════════════════════
-  //  BOSHQA FOYDALANUVCHI NATIJASINI QIDIRISH
-  // ═══════════════════════════════════════════════
-  async function searchUserResults() {
-    const searchId = document.getElementById('searchUserId').value.trim();
-    const accessDenied = document.getElementById('accessDenied');
-    const foundCard = document.getElementById('foundUserCard');
-
-    accessDenied.style.display = 'none';
-    foundCard.style.display = 'none';
-
-    if (!searchId) {
-      alert('Iltimos, Telegram ID raqamini kiriting!');
-      return;
-    }
-
-    if (!canViewOthers()) {
-      accessDenied.style.display = 'block';
-      return;
-    }
-
-    try {
-      const res = await fetch('https://test-82a8a-default-rtdb.firebaseio.com/results.json');
-      if (!res.ok) throw new Error('Firebase xatosi: ' + res.status);
-      
-      const allResults = await res.json();
-      if (!allResults) {
-        alert('Hech qanday natija topilmadi.');
-        return;
-      }
-
-      let foundData = null;
-      let foundKey = null;
-
-      for (const key in allResults) {
-        const item = allResults[key];
-        if (item && String(item.user_id) === String(searchId)) {
-          foundData = item;
-          foundKey = key;
-          break;
+    // ═══════════════════════════════════════════════
+    //  LOCK TEKSHIRUVI (har bir foydalanuvchi bir marta)
+    // ═══════════════════════════════════════════════
+    function checkLock(testId, userId) {
+        if (!userId) return { locked: false };
+        
+        const lockKey = `mock_lock_${testId}_${userId}`;
+        const existing = localStorage.getItem(lockKey);
+        
+        if (existing) {
+            return { locked: true, savedAt: existing };
         }
-      }
+        return { locked: false, lockKey: lockKey };
+    }
 
-      if (!foundData) {
-        alert('Bu ID bo\'yicha natija topilmadi.');
-        return;
-      }
+    function setLock(lockKey, code) {
+        if (!lockKey) return;
+        localStorage.setItem(lockKey, JSON.stringify({
+            code: code,
+            time: new Date().toISOString()
+        }));
+    }
 
-      const answersArr = foundData.answers || [];
-      const numQuestions = answersArr.length;
-      const totalCorrect = answersArr.filter(a => a === '1').reduce((s, a) => s + 1, 0);
+    // ═══════════════════════════════════════════════
+    //  LOCK EKRANI
+    // ═══════════════════════════════════════════════
+    function showLockScreen(savedData) {
+        let info = "";
+        try {
+            const parsed = JSON.parse(savedData);
+            if (parsed.time) {
+                info = `<p>Siz bu testni <b>${new Date(parsed.time).toLocaleString('uz-UZ')}</b> da yechgansiz.</p>`;
+            }
+        } catch(e) {}
 
-      const resultsMap = {};
-      for (const key in allResults) {
-        if (allResults[key] && allResults[key].answers) {
-          resultsMap[key] = allResults[key].answers;
+        document.querySelector('.container').innerHTML = `
+            <div class="lock-screen">
+                <div class="icon">🔒</div>
+                <h2>Test allaqachon yechilgan!</h2>
+                <p>Siz bu testni faqat <b>bir marta</b> yechishingiz mumkin.</p>
+                ${info}
+                <button class="submit-btn" onclick="window.Telegram.WebApp.close()" style="background:#e74c3c; margin-top:20px;">Ilovani yopish</button>
+            </div>
+        `;
+        document.getElementById('timer').innerHTML = "";
+    }
+
+    // ═══════════════════════════════════════════════
+    //  MOCK JSON NI GITHUB DAN YUKLASH
+    // ═══════════════════════════════════════════════
+    async function loadMockJson(testId) {
+        const url = `https://raw.githubusercontent.com/UPL-ANIME/bazemath/refs/heads/main/mock/${testId}.json`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Mock JSON topilmadi: " + testId);
+        return await res.json();
+    }
+
+    // ═══════════════════════════════════════════════
+    //  SAVOLLARNI JSON DAN YARATISH
+    // ═══════════════════════════════════════════════
+    async function renderTest() {
+        const testId = getTestIdFromUrl();
+        const userId = getUserId();
+
+        if (!testId) {
+            form.innerHTML = '<div class="loading" style="color:red">❌ test_id topilmadi!</div>';
+            return;
         }
-      }
-      const totalUsers = Object.keys(resultsMap).length;
 
-      let questionsData = {};
-      for (let qIdx = 0; qIdx < numQuestions; qIdx++) {
-        let correctCount = 0;
-        for (let uKey in resultsMap) {
-          correctCount += parseInt(resultsMap[uKey][qIdx] || '0');
+        // Lock tekshiruvi
+        const lock = checkLock(testId, userId);
+        if (lock.locked) {
+            showLockScreen(lock.savedAt);
+            return;
         }
-        questionsData[qIdx] = [totalUsers, correctCount];
-      }
 
-      let userAnswersMap = {};
-      for (let i = 0; i < numQuestions; i++) {
-        userAnswersMap[i] = parseInt(answersArr[i] || '0');
-      }
+        try {
+            const mock = await loadMockJson(testId);
+            const questions = mock.questions || [];
 
-      const finalResult = raschModel(questionsData, userAnswersMap);
-      const userLevel = getGradeLevel(finalResult.standardScore);
+            form.innerHTML = '';
 
-      document.getElementById('foundUserName').textContent = 'Foydalanuvchi #' + searchId;
-      document.getElementById('foundUserId').textContent = searchId;
-      document.getElementById('foundCorrect').textContent = finalResult.totalCorrect + ' / ' + numQuestions;
-      document.getElementById('foundScore').textContent = finalResult.standardScore;
-      document.getElementById('foundLevel').textContent = userLevel;
-      document.getElementById('foundTheta').textContent = finalResult.theta.toFixed(4);
-      foundCard.style.display = 'block';
+            for (const q of questions) {
+                if (q.type === "abcd") {
+                    createMCQWithText(q.num, q.text, ["A", "B", "C", "D"], q.options, q.image);
+                } else if (q.type === "abcdef_group") {
+                    createGroup(q);
+                } else if (q.type === "open") {
+                    createDoubleMathInput(q.num, q.text, q.sub_a, q.sub_b, q.image);
+                }
+            }
 
-    } catch (e) {
-      console.error(e);
-      alert('Qidirishda xatolik: ' + e.message);
-    }
-  }
+            // MathJax ni qayta ishga tushirish
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise().catch(err => console.log('MathJax xato:', err));
+            } else if (window.MathJax && window.MathJax.typeset) {
+                window.MathJax.typeset();
+            }
 
-  const DB_URL = 'https://raw.githubusercontent.com/UPL-ANIME/bazemath/refs/heads/main/date';
-
-  let chartInstance1 = null;
-  let chartInstance2 = null;
-
-  function decodeUserCode(compressedCode) {
-    try {
-      const decimalBigInt = base36ToBigInt(compressedCode.trim());
-      let binaryStr = decimalBigInt.toString(2);
-      if (binaryStr.startsWith('1')) binaryStr = binaryStr.substring(1);
-      else return null;
-      return binaryStr;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function base36ToBigInt(str) {
-    let res = 0n;
-    for (let i = 0; i < str.length; i++) {
-      res = res * 36n + BigInt(parseInt(str[i], 36));
-    }
-    return res;
-  }
-
-  function getGradeLevel(score) {
-    if (score < 45) return 'NC';
-    if (score < 50) return 'C+';
-    if (score < 55) return 'B';
-    if (score < 60) return 'B+';
-    if (score < 65) return 'A';
-    if (score < 70) return 'A+';
-    return 'A+';
-  }
-
-  function raschModel(questionsData, userAnswersMap, maxIter = 20) {
-    let betas = {};
-    for (let qId in questionsData) {
-      let stats = questionsData[qId];
-      let total = stats[0];
-      let correct = stats[1];
-      let p = correct / total;
-      p = Math.min(Math.max(p, 0.02), 0.98);
-      betas[qId] = Math.log((1 - p) / p);
-    }
-
-    let theta = 0;
-    for (let i = 0; i < maxIter; i++) {
-      let num = 0, den = 0;
-      for (let qId in betas) {
-        let beta = betas[qId];
-        let u = userAnswersMap[qId] || 0;
-        let p = 1 / (1 + Math.exp(-(theta - beta)));
-        num += (u - p);
-        den += (p * (1 - p));
-      }
-      if (den === 0) break;
-      theta += num / den;
-    }
-
-    let standardScore = ((theta + 4) / 8) * 100;
-    standardScore = Math.max(0, Math.min(100, standardScore));
-    let totalCorrect = Object.values(userAnswersMap).reduce((a, b) => a + b, 0);
-
-    return { theta: theta, standardScore: parseFloat(standardScore.toFixed(2)), totalCorrect: totalCorrect, betas: betas };
-  }
-
-  function renderCharts(questionsData, betas, numQuestions, totalParticipants) {
-    const labels = [], correctCounts = [], betaValues = [];
-    for (let i = 0; i < numQuestions; i++) {
-      labels.push((i + 1) + "-savol");
-      correctCounts.push(questionsData[i] ? questionsData[i][1] : 0);
-      betaValues.push(betas[i] ? parseFloat(betas[i].toFixed(2)) : 0);
-    }
-
-    if (chartInstance1) chartInstance1.destroy();
-    const ctx1 = document.getElementById('answersChart').getContext('2d');
-    chartInstance1 = new Chart(ctx1, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: totalParticipants + " kishidan to'g'ri javoblar",
-          data: correctCounts,
-          backgroundColor: 'rgba(35, 92, 50, 0.7)',
-          borderColor: 'rgba(35, 92, 50, 1)',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        animation: false,
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { title: { display: true, text: "Har bir savolga to'g'ri javob berganlar soni" } },
-        scales: {
-          y: { beginAtZero: true },
-          x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 70, font: { size: 9 } } }
+        } catch (e) {
+            form.innerHTML = `<div class="loading" style="color:red">❌ Xatolik: ${e.message}</div>`;
         }
-      }
-    });
+    }
 
-    if (chartInstance2) chartInstance2.destroy();
-    const ctx2 = document.getElementById('difficultyChart').getContext('2d');
-    chartInstance2 = new Chart(ctx2, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: "Savol qiyinchiligi (Beta)",
-          data: betaValues,
-          backgroundColor: 'rgba(200, 164, 91, 0.3)',
-          borderColor: 'rgba(200, 164, 91, 1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.2
-        }]
-      },
-      options: {
-        animation: false,
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { title: { display: true, text: "Har bir savolning qiyinchilik darajasi (Beta)" } },
-        scales: {
-          x: { ticks: { autoSkip: false, maxRotation: 90, minRotation: 70, font: { size: 9 } } }
+    // ═══════════════════════════════════════════════
+    //  VARIANTLI TEST (ABCD)
+    // ═══════════════════════════════════════════════
+    function createMCQWithText(num, text, options, optValues, imageUrl) {
+        let div = document.createElement('div');
+        div.className = 'q-row';
+        div.style.flexDirection = 'column';
+        div.style.alignItems = 'flex-start';
+
+        let html = `<div class="q-text"><b>${num}.</b> ${text}</div>`;
+        
+        // YANGI: rasm ko'rsatish
+        if (imageUrl) {
+            html += `<img class="q-image" src="${imageUrl}" alt="Diagram" onerror="this.style.display='none'">`;
         }
-      }
-    });
+        
+        html += `<div class="options-container" id="q${num}">`;
+        options.forEach(opt => {
+            const val = optValues ? (optValues[opt] || '') : opt;
+            html += `<button class="opt-btn" data-opt="${opt}" onclick="selectOpt(this,${num})" title="${val}">${opt}</button>`;
+        });
+        html += `</div>`;
+        div.innerHTML = html;
+        form.appendChild(div);
 
-    setTimeout(() => {
-      document.getElementById('certChartImg1').src = chartInstance1.toBase64Image();
-      document.getElementById('certChartImg2').src = chartInstance2.toBase64Image();
-    }, 150);
-  }
-
-  async function checkResults() {
-    const codeInput = document.getElementById('userCode').value.trim();
-    const statusMsg = document.getElementById('statusMessage');
-    const resultCard = document.getElementById('resultCard');
-
-    statusMsg.style.display = 'block';
-    statusMsg.className = 'status-msg status-loading';
-    statusMsg.textContent = "Baza yuklanmoqda va tekshirilmoqda...";
-    resultCard.style.display = 'none';
-
-    if (!codeInput) {
-      statusMsg.className = 'status-msg status-error';
-      statusMsg.textContent = "Iltimos, kodingizni kiriting!";
-      return;
+        // Har bir savol uchun MathJax ni qayta ishga tushirish
+        setTimeout(() => {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([div]).catch(() => {});
+            }
+        }, 50);
     }
 
-    const userBinaryAnswers = decodeUserCode(codeInput);
-    if (!userBinaryAnswers) {
-      statusMsg.className = 'status-msg status-error';
-      statusMsg.textContent = "Kiritilgan kod xato yoki buzilgan formatda!";
-      return;
-    }
+    // ═══════════════════════════════════════════════
+    //  33-35 MOSLASHTIRISH GURUHI
+    // ═══════════════════════════════════════════════
+    function createGroup(q) {
+        let div = document.createElement('div');
+        div.className = 'q-row';
+        div.style.flexDirection = 'column';
+        div.style.alignItems = 'flex-start';
 
-    try {
-      const response = await fetch(DB_URL);
-      if (!response.ok) throw new Error("HTTP xatosi " + response.status);
-      const jsonData = await response.json();
-      const resultsMap = jsonData.results;
-      const numQuestions = resultsMap[Object.keys(resultsMap)[0]].length;
-
-      let paddedBinaryAnswers = userBinaryAnswers.padStart(numQuestions, '0');
-      let questionsData = {};
-      let totalUsers = Object.keys(resultsMap).length;
-
-      for (let qIdx = 0; qIdx < numQuestions; qIdx++) {
-        let correctCount = 0;
-        for (let userId in resultsMap) {
-          correctCount += parseInt(resultsMap[userId][qIdx] || "0");
+        let html = `<div class="group-title">🔗 33–35. Moslashtirish topshirig'i</div>`;
+        
+        // YANGI: rasm ko'rsatish
+        if (q.image) {
+            html += `<img class="q-image" src="${q.image}" alt="Diagram" onerror="this.style.display='none'">`;
         }
-        questionsData[qIdx] = [totalUsers, correctCount];
-      }
+        
+        html += `<div class="q-text"><b>33.</b> ${q.sub33 || ''}</div>`;
+        html += `<div class="options-container" id="q33">`;
+        ["A","B","C","D","E","F"].forEach(opt => {
+            html += `<button class="opt-btn" data-opt="${opt}" onclick="selectOpt(this,33)">${opt}</button>`;
+        });
+        html += `</div>`;
 
-      let userAnswersMap = {};
-      for (let i = 0; i < numQuestions; i++) {
-        userAnswersMap[i] = parseInt(paddedBinaryAnswers[i] || "0");
-      }
+        html += `<div class="q-text" style="margin-top:10px"><b>34.</b> ${q.sub34 || ''}</div>`;
+        html += `<div class="options-container" id="q34">`;
+        ["A","B","C","D","E","F"].forEach(opt => {
+            html += `<button class="opt-btn" data-opt="${opt}" onclick="selectOpt(this,34)">${opt}</button>`;
+        });
+        html += `</div>`;
 
-      const finalResult = raschModel(questionsData, userAnswersMap);
-      const userLevel = getGradeLevel(finalResult.standardScore);
+        html += `<div class="q-text" style="margin-top:10px"><b>35.</b> ${q.sub35 || ''}</div>`;
+        html += `<div class="options-container" id="q35">`;
+        ["A","B","C","D","E","F"].forEach(opt => {
+            html += `<button class="opt-btn" data-opt="${opt}" onclick="selectOpt(this,35)">${opt}</button>`;
+        });
+        html += `</div>`;
 
-      document.getElementById('resTotalUsers').textContent = totalUsers + " kishi";
-      document.getElementById('resCorrect').textContent = finalResult.totalCorrect;
-      document.getElementById('resTotal').textContent = numQuestions;
-      document.getElementById('resTheta').textContent = finalResult.theta.toFixed(4);
-      document.getElementById('resScore').textContent = finalResult.standardScore;
-      document.getElementById('resLevel').textContent = userLevel;
+        div.innerHTML = html;
+        form.appendChild(div);
 
-      statusMsg.style.display = 'none';
-      resultCard.style.display = 'block';
-
-      renderCharts(questionsData, finalResult.betas, numQuestions, totalUsers);
-
-      document.getElementById('certFamiliya').textContent = document.getElementById('userFamiliya').value.trim() || 'Kiritilmagan';
-      document.getElementById('certIsm').textContent = document.getElementById('userIsm').value.trim() || 'Kiritilmagan';
-      document.getElementById('certOtasi').textContent = document.getElementById('userOtasi').value.trim() || 'Kiritilmagan';
-
-      document.getElementById('certNumber').textContent = "IA-2026-" + Math.floor(100000 + Math.random() * 900000);
-      document.getElementById('certUserId').textContent = "ID-" + (CURRENT_USER_ID || Math.floor(10000 + Math.random() * 90000));
-
-      document.getElementById('certScore').textContent = finalResult.standardScore;
-      document.getElementById('certPercent').textContent = finalResult.standardScore + " %";
-      document.getElementById('certLevel').textContent = userLevel;
-      document.getElementById('certSectionScore').textContent = finalResult.standardScore;
-      document.getElementById('certQuestionsWorked').textContent = finalResult.totalCorrect + " / " + numQuestions + " ta";
-      document.getElementById('certTotalUsers').textContent = totalUsers;
-      document.getElementById('certScoreBar').style.width = finalResult.standardScore + "%";
-
-      const today = new Date();
-      document.getElementById('certIssueDate').textContent = String(today.getDate()).padStart(2, '0') + '.' + String(today.getMonth() + 1).padStart(2, '0') + '.' + today.getFullYear();
-      
-      const expiryDate = new Date();
-      expiryDate.setFullYear(today.getFullYear() + 3);
-      expiryDate.setDate(expiryDate.getDate() - 1);
-      document.getElementById('certExpiryDate').textContent = String(expiryDate.getDate()).padStart(2, '0') + '.' + String(expiryDate.getMonth() + 1).padStart(2, '0') + '.' + expiryDate.getFullYear();
-
-    } catch (err) {
-      console.error(err);
-      statusMsg.className = 'status-msg status-error';
-      statusMsg.textContent = "Baza bilan muammo";
+        setTimeout(() => {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([div]).catch(() => {});
+            }
+        }, 50);
     }
-  }
 
-  function showCertificatePreview() {
-    document.getElementById('mainPage').style.display = 'none';
-    const previewPage = document.getElementById('certPreviewPage');
-    previewPage.style.display = 'flex';
-    
-    const wrapper = document.getElementById('certScaleWrapper');
-    const screenWidth = window.innerWidth;
-    const padding = 40;
-    const availableWidth = screenWidth - padding;
-    const certWidth = 794;
+    // ═══════════════════════════════════════════════
+    //  YOZMA TEST (a va b)
+    // ═══════════════════════════════════════════════
+    function createDoubleMathInput(num, text, subA, subB, imageUrl) {
+        let div = document.createElement('div');
+        div.className = 'q-row';
+        div.style.flexDirection = 'column';
+        
+        let html = `<div class="q-text"><b>${num}.</b> ${text || ''}</div>`;
+        
+        // YANGI: rasm ko'rsatish
+        if (imageUrl) {
+            html += `<img class="q-image" src="${imageUrl}" alt="Diagram" onerror="this.style.display='none'">`;
+        }
+        
+        html += `
+            <span class="q-num" style="align-self:flex-start;">${num}. a) ${subA || 'Javob:'}</span>
+            <math-field id="q${num}a" virtual-keyboard-mode="onfocus"></math-field>
+            <span class="q-num" style="align-self:flex-start;">${num}. b) ${subB || 'Javob:'}</span>
+            <math-field id="q${num}b" virtual-keyboard-mode="onfocus"></math-field>`;
+        div.innerHTML = html;
+        form.appendChild(div);
 
-    if (availableWidth < certWidth) {
-      const scale = availableWidth / certWidth;
-      wrapper.style.transform = `scale(${scale})`;
-      wrapper.style.marginBottom = `-${(1123 * 2) * (1 - scale)}px`;
-    } else {
-      wrapper.style.transform = 'none';
-      wrapper.style.marginBottom = '0';
+        setTimeout(() => {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([div]).catch(() => {});
+            }
+        }, 50);
     }
-    
-    window.scrollTo(0, 0);
-  }
 
-  function hideCertificatePreview() {
-    document.getElementById('certPreviewPage').style.display = 'none';
-    document.getElementById('mainPage').style.display = 'block';
-    window.scrollTo(0, 0);
-  }
+    // ═══════════════════════════════════════════════
+    //  VARIANTNI TANLASH
+    // ═══════════════════════════════════════════════
+    function selectOpt(btn, num){
+        let parent = document.getElementById(`q${num}`);
+        Array.from(parent.children).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
 
-  function generatePDF() {
-    const wrapper = document.getElementById('certScaleWrapper');
-    const oldTransform = wrapper.style.transform;
-    const oldMargin = wrapper.style.marginBottom;
-    wrapper.style.transform = 'none';
-    wrapper.style.marginBottom = '0';
-    
-    const opt = {
-      margin:       0,
-      filename:     'sertifikat_va_tahlil.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, allowTaint: true, scrollY: 0 },
-      jsPDF:        { unit: 'px', format: [794, 1123], orientation: 'portrait' }
-    };
+    // ═══════════════════════════════════════════════
+    //  NATIJA KARTASI
+    // ═══════════════════════════════════════════════
+    function showResultCard(codeText) {
+        const binaryWithPrefix = '1' + codeText;
+        const compressedCode = BigInt('0b' + binaryWithPrefix).toString(36); 
 
-    html2pdf().set(opt).from(wrapper).save().then(() => {
-      wrapper.style.transform = oldTransform;
-      wrapper.style.marginBottom = oldMargin;
-    }).catch(err => {
-      console.error("PDF yaratishda xato:", err);
-      wrapper.style.transform = oldTransform;
-      wrapper.style.marginBottom = oldMargin;
-    });
-  }
+        document.body.innerHTML = `
+            <style>
+              .card {
+                background: #ffffff;
+                padding: 25px;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                max-width: 350px;
+                margin: 50px auto;
+                text-align: center;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              }
+              .icon { font-size: 40px; margin-bottom: 10px; }
+              .card h1 { font-size: 20px; color: #2f3640; margin-bottom: 20px; }
+              .code-box {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: #f1f2f6;
+                padding: 10px 15px;
+                border-radius: 8px;
+                border: 1px solid #dcdde1;
+                margin-bottom: 15px;
+              }
+              .code-text {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 180px;
+                font-family: monospace;
+                font-size: 15px;
+                font-weight: bold;
+                color: #2f3640;
+              }
+              .copy-btn {
+                background: #4cd137;
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-weight: bold;
+                flex-shrink: 0;
+                margin-left: 8px;
+              }
+              .copy-btn:hover { background: #44bd32; }
+              .alert { font-size: 14px; color: #718093; margin-bottom: 0; }
+              .close-btn {
+                width: 100%;
+                margin-top: 15px;
+                padding: 10px;
+                background: #e74c3c;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                font-weight: bold;
+                cursor: pointer;
+              }
+              .close-btn:hover { background: #c0392b; }
+            </style>
+
+            <div class="card">
+                <div class="icon">🔑</div>
+                <h1>Sizning Shaxsiy Kodingiz</h1>
+                <div class="code-box">
+                    <span class="code-text" id="myCode">${compressedCode}</span>
+                    <button class="copy-btn" onclick="copyCode()">Nusxalash</button>
+                </div>
+                <p class="alert">Ushbu kodni botga yuboring!</p>
+                <button class="close-btn" onclick="window.Telegram.WebApp.close()">Ilovani yopish</button>
+            </div>
+        `;
+    }
+
+    function copyCode() {
+        const codeText = document.getElementById("myCode").innerText;
+        navigator.clipboard.writeText(codeText).then(() => {
+            const btn = document.querySelector(".copy-btn");
+            btn.innerText = "Nusxalandi! ✓";
+            btn.style.backgroundColor = "#27ae60";
+            setTimeout(() => {
+                btn.innerText = "Nusxalash";
+                btn.style.backgroundColor = "#4cd137"; 
+            }, 2000);
+        });
+    }
+
+    // ═══════════════════════════════════════════════
+    //  JAVOBLARNI YUBORISH
+    // ═══════════════════════════════════════════════
+    async function sendToBot(){
+        const testId = getTestIdFromUrl();
+        const userId = getUserId();
+
+        let results = {};
+
+        for(let i = 1; i <= 35; i++){
+            let el = document.getElementById(`q${i}`);
+            if (!el) continue;
+            let active = el.querySelector('.active');
+            results[i] = active ? active.getAttribute('data-opt') : "";
+        }
+
+        for(let i = 36; i <= 45; i++){
+            let elA = document.getElementById(`q${i}a`);
+            let elB = document.getElementById(`q${i}b`);
+            if (!elA || !elB) continue;
+            let valA = elA.value;
+            let valB = elB.value;
+            results[`${i}a`] = valA ? valA.trim() : "";
+            results[`${i}b`] = valB ? valB.trim() : "";
+        }
+
+        const url = "https://test-82a8a-default-rtdb.firebaseio.com/results.json";
+        
+        try {
+            const res = await fetch("https://raw.githubusercontent.com/UPL-ANIME/bazemath/refs/heads/main/correctanwers");
+            const tj = await res.text();
+            const jt = JSON.parse(tj);
+            
+            let li = [];
+            let cd = "";
+            
+            let keySequence = [];
+            for (let i = 1; i <= 35; i++) keySequence.push(i.toString());
+            for (let i = 36; i <= 45; i++) {
+                keySequence.push(`${i}a`);
+                keySequence.push(`${i}b`);
+            }
+
+            keySequence.forEach((key, index) => {
+                let userAns = results[key];
+                let correctAns = (jt[key] !== undefined) ? jt[key] : jt[index + 1];
+
+                if (userAns && userAns !== "" && String(correctAns).trim() === String(userAns).trim()) {
+                    li.push("1");
+                    cd += "1";
+                } else {
+                    li.push("0");
+                    cd += "0";
+                }
+            });
+            
+            // Firebase ga natija + user_id + test_id yozish
+            await fetch(url, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    user_id: userId,
+                    test_id: testId,
+                    answers: li,
+                    code: cd,
+                    time: new Date().toISOString()
+                })
+            });
+
+            // Lock ni saqlash
+            const lock = checkLock(testId, userId);
+            if (lock.lockKey) {
+                setLock(lock.lockKey, cd);
+            }
+            
+            showResultCard(cd);
+            
+        } catch (error) {
+            alert("Xatolik yuz berdi: " + error.message);
+        }
+    }
+
+    // ═══════════════════════════════════════════════
+    //  TAYMER
+    // ═══════════════════════════════════════════════
+    let deadline = null;
+    let timerInterval = null;
+    let isInitialCheck = true;
+
+    async function fetchTimeAndStartTimer() {
+        try {
+            const res = await fetch("https://raw.githubusercontent.com/UPL-ANIME/bazemath/refs/heads/main/time");
+            const timeText = await res.text();
+            let timeString = timeText.trim();
+            
+            if (/^\d+$/.test(timeString)) {
+                deadline = parseInt(timeString);
+                if (timeString.length === 10) deadline *= 1000;
+            } else {
+                deadline = new Date(timeString).getTime();
+            }
+            
+            if (!isNaN(deadline)) {
+                checkTime();
+                timerInterval = setInterval(checkTime, 1000);
+            }
+        } catch (error) {
+            console.error("Vaqtni yuklashda xatolik:", error);
+        }
+    }
+
+    function checkTime() {
+        if (!deadline) return;
+        const now = new Date().getTime();
+        const distance = deadline - now;
+        const timerEl = document.getElementById("timer");
+
+        if (distance <= 0) {
+            clearInterval(timerInterval);
+            if (isInitialCheck) {
+                document.body.innerHTML = `<div class="container"><h3 style="color:red">Test ishlash vaqti tugagan! Testni ishlash imkonsiz.</h3></div>`;
+            } else {
+                if (timerEl) timerEl.innerHTML = "Vaqt tugadi! Javoblar avtomatik yuborilmoqda...";
+                sendToBot();
+            }
+        } else {
+            isInitialCheck = false;
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            if (timerEl) {
+                timerEl.innerHTML = `Qolgan vaqt: ${hours > 0 ? hours + ':' : ''}${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════
+    //  ISHGA TUSHIRISH
+    // ═══════════════════════════════════════════════
+    renderTest();
+    fetchTimeAndStartTimer();
 </script>
 
 </body>
